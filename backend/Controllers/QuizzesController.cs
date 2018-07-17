@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,14 +19,20 @@ namespace backend.Controllers
             _context = context;
         }
         [HttpGet]
+        [Authorize]
         public IEnumerable<Models.Quiz> Get()
         {
-            return _context.Quizzes;
+            var userId = HttpContext.User.Claims.First().Value;
+            return _context.Quizzes.Where(q=>q.OwnerId==userId);
         }
+        [Authorize]
         [HttpPost]
         public async Task<IActionResult> Post([FromBody]Models.Quiz quiz)
         {
+            var userId = HttpContext.User.Claims.First().Value;
+            quiz.OwnerId = userId;
             _context.Quizzes.Add(quiz);
+
             await _context.SaveChangesAsync();
             return Ok(quiz);
         }
